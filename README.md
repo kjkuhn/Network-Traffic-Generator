@@ -16,4 +16,4 @@ then restart it with sudo and the desired options
 
 tcpdump might be useful to you:
 e.g.
-	sudo tcpdump -nettti <interface> '(ether dst host <destination address>)'
+	sudo tcpdump -nettti "interface" '(ether dst host "destination address")'
