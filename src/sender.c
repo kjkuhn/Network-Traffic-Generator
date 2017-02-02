@@ -98,6 +98,8 @@ void sender()
 	memset(buffer, 0, 1536);
 	eth = (struct vlan_eth*)buffer;
 	len = sizeof(struct vlan_eth);
+	if(opts.vlan_id <= 0)
+		len -= 4;
 	ip = (struct iphdr*)&buffer[len];
 	len += sizeof(struct iphdr);
 	udp = (struct udphdr*)&buffer[len];
@@ -114,21 +116,33 @@ void sender()
 	ip->ttl = 42;
 	ip->protocol = 17;
 	ip->saddr = inet_addr(inet_ntoa(((struct sockaddr_in *)&if_ip.ifr_addr)->sin_addr));
-	ip->daddr = inet_addr(DEFAULT_DEST_IP);
+//	ip->daddr = inet_addr(DEFAULT_DEST_IP);
+	ip->daddr = opts.ip_dest;
 	ip->tot_len = htons(sizeof(struct iphdr) + sizeof(struct udphdr) + opts.packet_size);
-	mton(eth->dst, DEFAULT_DEST_MAC);
+	//mton(eth->dst, DEFAULT_DEST_MAC);
+	memcpy(eth->dst, opts.eth_dest, 6);
 	memcpy(eth->src, if_mac.ifr_hwaddr.sa_data, 6);
-	eth->ether_type = htons(0x0800);
-	eth->vlan_type = htons(0x8100);
-	eth->vlan_data = htons(((opts.vlan_prio & 0x7) << 13) | (opts.vlan_id & 0x0fff));
+	if(opts.vlan_id > 0)
+	{
+		eth->ether_type = htons(0x0800);
+		eth->vlan_type = htons(0x8100);
+		eth->vlan_data = htons(((opts.vlan_prio & 0x7) << 13) | (opts.vlan_id & 0x0fff));
+	}
+	else
+	{
+		eth->vlan_type = htons(0x0800);
+	}
 	sa.sll_ifindex = if_idx.ifr_ifindex;
 	sa.sll_halen = ETH_ALEN;
 	
 	while(run)
 	{
-		if(usleep(opts.delay) == -1)
+		if(opts.delay > 0)
 		{
-			printf("%s\n", strerror(errno));
+			if(usleep(opts.delay) == -1)
+			{
+				printf("%s\n", strerror(errno));
+			}
 		}
 		if(sendto(sd, buffer, len, 0, (struct sockaddr*)&sa, sizeof(struct sockaddr_ll)) < 0)
 		{

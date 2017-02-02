@@ -8,6 +8,8 @@ struct options{
 	char *eth;
 	unsigned int packet_size;
 	unsigned int delay;
+	unsigned char eth_dest[6];
+	unsigned int ip_dest;
 };
 
 extern struct options opts;

@@ -9,12 +9,15 @@
 #include "sniffer.h"
 #include "sender.h"
 
+#include "netinet/in.h"
+#include "sys/socket.h"
+#include "arpa/inet.h"
 
 #define DEFAULT_DELAY	500
 
 
 
-static const char *options[] = {"vlan-id", "vlan-prio", "sniffer", "sender", "eth", "ps", "delay"};
+static const char *options[] = {"vlan-id", "vlan-prio", "sniffer", "sender", "eth", "ps", "delay", "mac-dest", "ip-dest"};
 
 struct options opts;
 
@@ -59,10 +62,22 @@ int process_options(int argc, char **argv)
 				else
 					opts.packet_size = 50;
 			}
-			else if(strcmp(&argv[i][1], options[5]) == 0)
+			else if(strcmp(&argv[i][1], options[6]) == 0)
 			{
 				i++;
-				sscanf(&argv[i][1], "%u", &opts.delay);
+				sscanf(argv[i], "%u", &opts.delay);
+			}
+			else if(strcmp(&argv[i][1], options[7]) == 0)
+			{
+				i++;
+				sscanf(argv[i], "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
+					&opts.eth_dest[0], &opts.eth_dest[1], &opts.eth_dest[2],
+					&opts.eth_dest[3], &opts.eth_dest[4], &opts.eth_dest[5]);
+			}
+			else if(strcmp(&argv[i][1], options[8]) == 0)
+			{
+				i++;
+				opts.ip_dest = inet_addr(argv[i]);
 			}
 		}
 	}
@@ -72,16 +87,21 @@ int process_options(int argc, char **argv)
 void print_help()
 {
 	printf("invalid parameters, possible options:\n\t-vlan-id <id>\n\t-vlan-prio <0..7>\n\t-<sniffer/sender>\n");
-	printf("\t-eth <interface>\n\t-ps <packet size>\n\t-delay <delay in us>\n\n");
+	printf("\t-eth <interface>\n\t-ps <packet size>\n\t-delay <delay in us>\n\t-eth-dest <destination mac>\n");
+	printf("\t-ip-dest <destination ip>\n\n");
 }
 
 
 int main(int argc, char **argv)
 {
+	//int i;
+	//for(i = 0; i < argc; i++)
+	//	printf("%s\n",argv[i]);
 	memset(&opts, 0, sizeof(opts));
 	opts.state = -1;
-	opts.delay = DEFAULT_DELAY;
+	//opts.delay = DEFAULT_DELAY;
 	opts.packet_size = 50;
+	
 	process_options(argc, argv);
 	switch(opts.state)
 	{
