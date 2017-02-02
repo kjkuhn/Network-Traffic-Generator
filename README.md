@@ -6,7 +6,7 @@ this is a simpe and easy to use traffic generator for networks, including a VLAN
 
 In order to build the program goto build and execute 
 	cmake .. && make
-after this you should able to run the code
+after this you should be able to run the code
 
 ## EXECUTION
 
